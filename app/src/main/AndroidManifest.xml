@@ -13,14 +13,23 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     package="dev.spikeysanju.wiggles">
 
+    <uses-permission android:name="android.permission.INTERNET" />
+    <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
+    <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
+
     <application
+
         android:allowBackup="true"
         android:icon="@drawable/wiggle_logo"
         android:roundIcon="@drawable/wiggle_logo"
         android:label="@string/app_name"
         android:supportsRtl="true"
         android:theme="@style/Theme.dev.spikeysanju.wiggles">
+        <meta-data
+            android:name="com.google.android.geo.AIzaSyDG_iqKt885VvIIoEX21Evd3ls_UsI_YLU"
+            android:value="AIzaSyDG_iqKt885VvIIoEX21Evd3ls_UsI_YLU"/>
         <activity
+            android:exported="true"
             android:name=".MainActivity"
             android:label="@string/app_name"
             android:theme="@style/Theme.dev.spikeysanju.wiggles.NoActionBar">
