@@ -30,10 +30,14 @@ import dev.spikeysanju.wiggles.navigation.Screen
 @ExperimentalAnimationApi
 @Composable
 fun WigglesMain(toggleTheme: () -> Unit) {
+    // Remembering a NavController that handles navigation with animations in the app.
     val navController = rememberAnimatedNavController()
+    // Setup for a navigation host that enables animated transitions between composables.
     AnimatedNavHost(navController, startDestination = Screen.Home.route) {
+        // Define the home screen composable with associated transitions.
         composable(
             Screen.Home.route,
+            // Transition for exiting the home screen, sliding out and fading out.
             exitTransition = { _, _ ->
                 slideOutHorizontally(
                     targetOffsetX = { -300 },
@@ -43,6 +47,7 @@ fun WigglesMain(toggleTheme: () -> Unit) {
                     )
                 ) + fadeOut(animationSpec = tween(300))
             },
+            // Transition for returning to the home screen, sliding in and fading in.
             popEnterTransition = { _, _ ->
                 slideInHorizontally(
                     initialOffsetX = { -300 },
@@ -53,10 +58,13 @@ fun WigglesMain(toggleTheme: () -> Unit) {
                 ) + fadeIn(animationSpec = tween(300))
             },
         ) {
+            // The home screen UI content, passing in the navController, a list of dogs, and theme toggle function.
             Home(navController, FakeDogDatabase.dogList, toggleTheme)
         }
+        // Define the details screen composable with associated transitions.
         composable(
             "${Screen.Details.route}/{id}/{title}/{location}",
+            // Transition for entering the details screen, sliding in and fading in.
             enterTransition = { _, _ ->
                 slideInHorizontally(
                     initialOffsetX = { 300 },
@@ -66,6 +74,7 @@ fun WigglesMain(toggleTheme: () -> Unit) {
                     )
                 ) + fadeIn(animationSpec = tween(300))
             },
+            // Transition for exiting the details screen, sliding out and fading out.
             exitTransition = { _, _ ->
                 slideOutHorizontally(
                     targetOffsetX = { 300 },
@@ -75,8 +84,10 @@ fun WigglesMain(toggleTheme: () -> Unit) {
                     )
                 ) + fadeOut(animationSpec = tween(300))
             },
+            // Arguments to be passed to the details screen, such as the ID.
             arguments = listOf(navArgument("id") { type = NavType.IntType })
         ) {
+            // The details screen UI content, retrieving the 'id' from the arguments.
             Details(navController, it.arguments?.getInt("id") ?: 0)
         }
     }
