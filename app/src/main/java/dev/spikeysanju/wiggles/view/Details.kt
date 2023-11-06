@@ -109,10 +109,13 @@ fun Details(navController: NavController, id: Int) {
 
 @Composable
 fun MyLocationComponent(viewModel: LocationViewModel) {
+    // Obtain the current context of the Composable
     val context = LocalContext.current
+    // Prepare the permission request launcher for the fine location permission
     val permissionLauncher = rememberLauncherForActivityResult(
         ActivityResultContracts.RequestPermission()
     ) { isGranted: Boolean ->
+        // Check if permission is granted and get location if it is
         if (isGranted) {
             viewModel.getLocation()
         } else {
@@ -120,21 +123,24 @@ fun MyLocationComponent(viewModel: LocationViewModel) {
         }
     }
 
-    // Initialization logic for ViewModel
+    // Initialize the location client and clean up when the Composable is disposed
     DisposableEffect(context) {
         viewModel.initLocationClient(context)
         onDispose { }
     }
 
+    // Request location permission when the Composable is first launched
     LaunchedEffect(key1 = true) {
         permissionLauncher.launch(Manifest.permission.ACCESS_FINE_LOCATION)
     }
 
     // Now `viewModel.location` holds the latest location or null.
     // You can pass this state to your `AndroidView` composable to update the `MapView`.
+    // Location state from the ViewModel
     val location = viewModel.location.value
 
     // Display the map
+    // Embed the MapView into the Composable UI using AndroidView
     AndroidView(
         modifier = Modifier.fillMaxSize()
             .fillMaxWidth() // Fill the width of LazyColumn
@@ -152,9 +158,10 @@ fun MyLocationComponent(viewModel: LocationViewModel) {
 //                    }
 //                }
 
+                // When map is ready, add a red marker at the user's current location
                 getMapAsync { googleMap ->
                     location?.let { loc ->
-                        Log.d("MyLocationComponent", "Adding marker at lat: ${loc.latitude}, lng: ${loc.longitude}")
+
                         val userLatLng = LatLng(loc.latitude, loc.longitude)
                         googleMap.clear() // Clear the previous markers
                         googleMap.addMarker(
@@ -163,8 +170,9 @@ fun MyLocationComponent(viewModel: LocationViewModel) {
                                 .title("Your Location")
                                 .icon(BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_RED))
                         )
+                        // Move the camera to the user's current location
                         googleMap.moveCamera(CameraUpdateFactory.newLatLngZoom(userLatLng, 12f))
-                    } ?: Log.d("MyLocationComponent", "Location is null")
+                    }
                 }
 
             }
@@ -173,7 +181,9 @@ fun MyLocationComponent(viewModel: LocationViewModel) {
 
 
         update = { mapView ->
+            // This block is executed when the Composable is recomposed and the MapView is already created.
             mapView.getMapAsync { googleMap ->
+
                 location?.let { loc ->
                     val userLatLng = LatLng(loc.latitude, loc.longitude)
                     googleMap.clear() // Clear all markers before adding a new one
@@ -183,6 +193,7 @@ fun MyLocationComponent(viewModel: LocationViewModel) {
                             .title("Your Location")
                             .icon(BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_RED))
                     )
+                    // Move the camera to the new position if the user's location changes
                     googleMap.moveCamera(CameraUpdateFactory.newLatLngZoom(userLatLng, 12f))
                 }
             }
