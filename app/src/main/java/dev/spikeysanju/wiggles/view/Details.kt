@@ -173,10 +173,16 @@ fun MyLocationComponent(viewModel: LocationViewModel) {
 
 
         update = { mapView ->
-            // This is called whenever the Composable is recomposed and the mapView is already created.
             mapView.getMapAsync { googleMap ->
-                location?.let {
-                    val userLatLng = LatLng(it.latitude, it.longitude)
+                location?.let { loc ->
+                    val userLatLng = LatLng(loc.latitude, loc.longitude)
+                    googleMap.clear() // Clear all markers before adding a new one
+                    googleMap.addMarker(
+                        MarkerOptions()
+                            .position(userLatLng)
+                            .title("Your Location")
+                            .icon(BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_RED))
+                    )
                     googleMap.moveCamera(CameraUpdateFactory.newLatLngZoom(userLatLng, 12f))
                 }
             }
