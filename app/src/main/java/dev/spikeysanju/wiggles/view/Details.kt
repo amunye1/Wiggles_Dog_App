@@ -15,6 +15,9 @@
  */
 package dev.spikeysanju.wiggles.view
 
+import android.location.Location
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -37,23 +40,43 @@ import androidx.compose.material.TopAppBar
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.painter.Painter
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.colorResource
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
+import com.google.android.gms.location.FusedLocationProviderClient
+import com.google.android.gms.maps.GoogleMap
 import dev.spikeysanju.wiggles.R
 import dev.spikeysanju.wiggles.component.DogInfoCard
 import dev.spikeysanju.wiggles.component.InfoCard
 import dev.spikeysanju.wiggles.component.OwnerCard
 import dev.spikeysanju.wiggles.data.FakeDogDatabase
+import dev.spikeysanju.wiggles.view.maps.LocationViewModel
+import android.Manifest
+import android.util.Log
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.fillMaxHeight
+import androidx.compose.foundation.layout.heightIn
+import androidx.compose.ui.viewinterop.AndroidView
+import com.google.android.gms.maps.CameraUpdateFactory
+import com.google.android.gms.maps.MapView
+import com.google.android.gms.maps.model.BitmapDescriptorFactory
+import com.google.android.gms.maps.model.LatLng
+import com.google.android.gms.maps.model.MarkerOptions
 
+var currentLocation : Location? = null
+var fusedLocationProviderClient: FusedLocationProviderClient? = null
+val REQUESTCODE =101
 @Composable
 fun Details(navController: NavController, id: Int) {
 
@@ -85,10 +108,90 @@ fun Details(navController: NavController, id: Int) {
 }
 
 @Composable
+fun MyLocationComponent(viewModel: LocationViewModel) {
+    val context = LocalContext.current
+    val permissionLauncher = rememberLauncherForActivityResult(
+        ActivityResultContracts.RequestPermission()
+    ) { isGranted: Boolean ->
+        if (isGranted) {
+            viewModel.getLocation()
+        } else {
+            // Handle the case where permission is denied.
+        }
+    }
+
+    // Initialization logic for ViewModel
+    DisposableEffect(context) {
+        viewModel.initLocationClient(context)
+        onDispose { }
+    }
+
+    LaunchedEffect(key1 = true) {
+        permissionLauncher.launch(Manifest.permission.ACCESS_FINE_LOCATION)
+    }
+
+    // Now `viewModel.location` holds the latest location or null.
+    // You can pass this state to your `AndroidView` composable to update the `MapView`.
+    val location = viewModel.location.value
+
+    // Display the map
+    AndroidView(
+        modifier = Modifier.fillMaxSize()
+            .fillMaxWidth() // Fill the width of LazyColumn
+            .fillMaxHeight(),
+        factory = { ctx ->
+            MapView(ctx).apply {
+                onCreate(null)
+                onResume()
+//                getMapAsync { googleMap ->
+//                    // When the map is ready, update it with the user's location
+//                    location?.let {
+//                        val userLatLng = LatLng(it.latitude, it.longitude)
+//                        googleMap.moveCamera(CameraUpdateFactory.newLatLngZoom(userLatLng, 12f))
+//                        googleMap.addMarker(MarkerOptions().position(userLatLng).title("Your Location"))
+//                    }
+//                }
+
+                getMapAsync { googleMap ->
+                    location?.let { loc ->
+                        Log.d("MyLocationComponent", "Adding marker at lat: ${loc.latitude}, lng: ${loc.longitude}")
+                        val userLatLng = LatLng(loc.latitude, loc.longitude)
+                        googleMap.clear() // Clear the previous markers
+                        googleMap.addMarker(
+                            MarkerOptions()
+                                .position(userLatLng)
+                                .title("Your Location")
+                                .icon(BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_RED))
+                        )
+                        googleMap.moveCamera(CameraUpdateFactory.newLatLngZoom(userLatLng, 12f))
+                    } ?: Log.d("MyLocationComponent", "Location is null")
+                }
+
+            }
+
+        },
+
+
+        update = { mapView ->
+            // This is called whenever the Composable is recomposed and the mapView is already created.
+            mapView.getMapAsync { googleMap ->
+                location?.let {
+                    val userLatLng = LatLng(it.latitude, it.longitude)
+                    googleMap.moveCamera(CameraUpdateFactory.newLatLngZoom(userLatLng, 12f))
+                }
+            }
+        }
+    )
+}
+
+
+@Composable
 fun DetailsView(id: Int) {
+
     LazyColumn(
         modifier = Modifier
             .fillMaxSize()
+            .fillMaxHeight()
             .background(color = colorResource(id = R.color.background))
     ) {
 
@@ -111,6 +214,14 @@ fun DetailsView(id: Int) {
 
                 Spacer(modifier = Modifier.height(16.dp))
                 DogInfoCard(name, gender, location)
+            }
+        }
+        item {
+            Box(modifier = Modifier
+                .fillMaxWidth()
+                .height(300.dp) // Set the height you want for the MapView
+            ) {
+                MyLocationComponent(viewModel = LocationViewModel())
             }
         }
 

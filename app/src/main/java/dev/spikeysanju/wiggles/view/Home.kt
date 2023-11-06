@@ -57,7 +57,7 @@ fun Home(navController: NavHostController, dogList: List<Dog>, toggleTheme: () -
             OutlinedTextField(
                 value = genderFilter,
                 onValueChange = { genderFilter = it },
-                label = { Text("Enter gender") },
+                label = { Text("Enter gender or name") },
                 modifier = Modifier
                     .fillMaxWidth()
                     .background(Color.White, RoundedCornerShape(4.dp)), // Add background color and shape

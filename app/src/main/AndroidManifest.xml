@@ -26,7 +26,7 @@
         android:supportsRtl="true"
         android:theme="@style/Theme.dev.spikeysanju.wiggles">
         <meta-data
-            android:name="com.google.android.geo.AIzaSyDG_iqKt885VvIIoEX21Evd3ls_UsI_YLU"
+            android:name="com.google.android.geo.API_KEY"
             android:value="AIzaSyDG_iqKt885VvIIoEX21Evd3ls_UsI_YLU"/>
         <activity
             android:exported="true"
